@@ -1,36 +1,22 @@
 
 public class BTree {
 	int order = 2; // max number of node is order*2
-	IndexNode root;
-	LeafNode start; // first leaf node array
+	Nodes root = new Nodes(); // It should be LeafNode as root is the leaf at the first 5 keys
+	Nodes start = root; // first leaf node array
 	int height = 0; // height start from 0
 
-	class IndexNode {
-		int[] entries = new int[order * 2 + 1]; // store searching key, first entry uses to store number of key in the
+	class Nodes {
+		Integer[] entries = new Integer[order * 2 + 1]; // store searching key, first entry uses to store number of key in the
 												// array
-		IndexNode[] indexPointer = new IndexNode[entries.length]; // pointer for next level index, only use when it's
+		Nodes[] indexPointer = new Nodes[entries.length]; // pointer for next level index, only use when it's
 																	// not leaf node
-		LeafNode[] leafPointer = new LeafNode[entries.length]; // pointer for locating leaf node, only use when it's
-																// leaf node
+		Nodes leafSilding; // pointer for locating leaf node, only use when it's
+																// leaf node , It's only point to next leaf node
+		boolean isLeafNode = true;
 
-		IndexNode(int key) {
-			entries[0] = 1;
-			entries[1] = key;
-		}
-
-		public void InsertIndex(int key) {
-			if (entries[0] < order * 2) { // if index node have space
-				for (int i = entries[0]; i > 0; i--) { // scan from right to left
-					if (key >= entries[i]) {
-						entries[i + 1] = key;
-					} else {
-						entries[i + 1] = entries[i];
-					}
-				}
-				entries[0]++;
-			} else { // if index node have no space
-				PushUp();
-			}
+		Nodes(){
+			this.entries[0] =0;
+			this.isLeafNode = true;
 		}
 	}
 
@@ -49,46 +35,38 @@ public class BTree {
 		}
 	}
 
-	class LeafNode {
-		LeafNode next; // pointer for next leaf node array
-		LeafNode previous; // pointer for previous leaf node array
-		Node[] entries = new Node[order * 2 + 1]; // array to store nodes
 
-		LeafNode() {
-			Node record = new Node(0);
-			entries[0] = record;
+	public void Insert(int key) {
+		Nodes currentNode = root;
+		while(currentNode.isLeafNode==false){ // Find the nodes should store the key first, scan from root until the Nodes.isLeafNode = true
+			for(int i=1; i<=currentNode.entries[0];i++){
+				if(currentNode.entries[i]>key){
+					currentNode = currentNode.indexPointer[i-1];
+					return;
+				}
+			}
 		}
-
-		public void InsertLeaf(int key, int rid) {
-			if (entries[0].key < order * 2) { // if leaf node have space
-				for (int i = entries[0].key; i > 0; i--) { // scan from right to left
-					if (key >= entries[i].key) {
-						entries[i + 1] = new Node(key, rid);
-					} else {
-						entries[i + 1] = entries[i];
+		if(currentNode.entries[0]==4){
+			//full
+		}else{
+			for(int i=1; i<=4;i++){
+				if(currentNode.entries[i]==null){
+					currentNode.entries[i] = key ; // Insert complete add entries[0] count
+					currentNode.entries[0]++;
+					return;
+				}else{
+					if(currentNode.entries[i]>key){
+						int moveEntriesIndex = currentNode.entries[0]; // Move from last one 
+						while(moveEntriesIndex>=i){
+							currentNode.entries[moveEntriesIndex+1] = currentNode.entries[moveEntriesIndex];
+							moveEntriesIndex--;
+						}
+						currentNode.entries[i] =key;
+						currentNode.entries[0]++;
+						return;
 					}
 				}
-				entries[0].key++;
-			} else { // if leaf node have no space
-				CopyUp();
 			}
-		}
-	}
-
-	public void Insert(int key, int rid) {
-		if (root == null) {
-			if (start == null) {
-				LeafNode leaf = new LeafNode();
-				leaf.InsertLeaf(key, rid);
-				start = leaf;
-			} else {
-				start.InsertLeaf(key, rid);
-			}
-		} else {
-			// search place
-			LeafNode demo = new LeafNode();
-			demo.InsertLeaf(key, rid);
-
 		}
 	}
 
@@ -98,9 +76,27 @@ public class BTree {
 	public void CopyUp() {
 	};
 
+	public void printAllLeafNode(){
+		Nodes currentNodes = start;
+		while(currentNodes!=null){
+			for(int i=1; i<=4;i++){
+				System.out.print(currentNodes.entries[i]);
+				System.out.print(", ");
+			}
+			currentNodes = currentNodes.leafSilding;
+		}
+		System.out.println("");
+		System.out.println("End");
+	}
+
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-
+			BTree bTree = new BTree();
+			bTree.Insert(8);
+			bTree.Insert(3);
+			bTree.Insert(5);
+			bTree.Insert(1);
+			bTree.printAllLeafNode();
 	}
 
 }
