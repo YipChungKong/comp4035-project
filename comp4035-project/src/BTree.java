@@ -262,6 +262,12 @@ public class BTree {
 		bTree.Insert(4, 0);
 		System.out.println("--------------------------------");
 		bTree.Insert(12, 0);
+		bTree.Insert(15, 0);
+		bTree.Insert(20, 0);
+		bTree.Insert(9, 0);
+		bTree.Insert(11, 0);
+		bTree.Insert(10, 0);
+		bTree.Insert(25, 0);
 		bTree.PrintAllLeafNode();
 		bTree.PrintRootNode();
 	}
