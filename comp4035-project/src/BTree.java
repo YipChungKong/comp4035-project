@@ -79,7 +79,91 @@ public class BTree {
 		}
 	}
 
-	public void PushUp() {
+	public void PushUp(Nodes targetNodes, int overFlowKey, int key, int rid) { // get key and rid for re insert after
+																				// PushUp, get overFlowKey to calculate
+																				// the PushUp of parent(which one be the
+																				// new parent)
+		Node[] overFlowParent = new Node[5];
+		int sortedOverFlowKeyPosition = 0; // Remember the position of the overflow number for assign the indexPointer
+		for (int i = 0; i < 4; i++) {
+			// Put all the key of targetNodes to the overFlow one first
+			overFlowParent[i] = targetNodes.parentNode.entries[i + 1];
+		}
+		// compare Key and overFlow one by one
+		if (overFlowParent[3].key < overFlowKey) {
+			overFlowParent[4] = new Node(overFlowKey, rid);
+			sortedOverFlowKeyPosition = 4;
+		} else {
+			int sortPointer = 0;
+			while (overFlowParent[sortPointer].key < overFlowKey) {
+				sortPointer++;
+			}
+			int moveEntriesIndex = 3; // Move from last one
+			while (moveEntriesIndex >= sortPointer) {
+				overFlowParent[moveEntriesIndex + 1] = overFlowParent[moveEntriesIndex];
+				moveEntriesIndex--;
+			}
+			overFlowParent[sortPointer] = new Node(overFlowKey, rid);
+			sortedOverFlowKeyPosition = sortPointer;
+		}
+		if (targetNodes.parentNode == root) {
+			// Open two indexNode, store the data of root
+			Nodes leftIndexNode = new Nodes();
+			Nodes rightIndexNode = new Nodes();
+			leftIndexNode.isLeafNode = false;
+			rightIndexNode.isLeafNode = false;
+			if (sortedOverFlowKeyPosition <= 2) {
+				// Put parent[2] to be new parent
+				leftIndexNode.entries[0].key = 1;
+				rightIndexNode.entries[0].key = 2;
+				leftIndexNode.entries[1] = targetNodes.parentNode.entries[1];
+				leftIndexNode.indexPointer[0] = targetNodes.parentNode.indexPointer[0];
+				leftIndexNode.indexPointer[1] = targetNodes.parentNode.indexPointer[1];
+				rightIndexNode.entries[1] = targetNodes.parentNode.entries[3];
+				rightIndexNode.entries[2] = targetNodes.parentNode.entries[4];
+				rightIndexNode.indexPointer[0] = targetNodes.parentNode.indexPointer[2];
+				rightIndexNode.indexPointer[1] = targetNodes.parentNode.indexPointer[3];
+				rightIndexNode.indexPointer[2] = targetNodes.parentNode.indexPointer[4];
+				targetNodes.parentNode.entries[1] = targetNodes.parentNode.entries[2];
+			} else {
+				// Put parent[3] to be new parent
+				leftIndexNode.entries[0].key = 2;
+				rightIndexNode.entries[0].key = 1;
+				leftIndexNode.entries[1] = targetNodes.parentNode.entries[1];
+				leftIndexNode.entries[2] = targetNodes.parentNode.entries[2];
+				leftIndexNode.indexPointer[0] = targetNodes.parentNode.indexPointer[0];
+				leftIndexNode.indexPointer[1] = targetNodes.parentNode.indexPointer[1];
+				leftIndexNode.indexPointer[2] = targetNodes.parentNode.indexPointer[2];
+				rightIndexNode.entries[1] = targetNodes.parentNode.entries[4];
+				rightIndexNode.indexPointer[0] = targetNodes.parentNode.indexPointer[3];
+				rightIndexNode.indexPointer[1] = targetNodes.parentNode.indexPointer[4];
+				targetNodes.parentNode.entries[1] = targetNodes.parentNode.entries[3];
+			}
+			// Reset root
+			targetNodes.parentNode.entries[0].key = 1;
+			targetNodes.parentNode.entries[1] = targetNodes.parentNode.entries[2];
+			targetNodes.parentNode.entries[2] = null;
+			targetNodes.parentNode.entries[3] = null;
+			targetNodes.parentNode.entries[4] = null;
+			targetNodes.parentNode.indexPointer[0] = leftIndexNode;
+			targetNodes.parentNode.indexPointer[1] =rightIndexNode;
+			targetNodes.parentNode.indexPointer[2] = null;
+			targetNodes.parentNode.indexPointer[3] = null;
+			targetNodes.parentNode.indexPointer[4] = null;
+			// Set leafNode parent
+			leftIndexNode.indexPointer[0].parentNode = leftIndexNode;
+			leftIndexNode.indexPointer[1].parentNode = leftIndexNode;
+			rightIndexNode.indexPointer[0].parentNode = rightIndexNode;
+			rightIndexNode.indexPointer[1].parentNode = rightIndexNode;
+			if (sortedOverFlowKeyPosition > 2) {
+				leftIndexNode.indexPointer[2].parentNode = leftIndexNode;
+			} else {
+				rightIndexNode.indexPointer[2].parentNode = rightIndexNode;
+			}
+		} else {
+
+		}
+		Insert(key, rid);
 	};
 
 	public void CopyUp(Nodes targetNodes, int key, int rid) {
@@ -175,6 +259,8 @@ public class BTree {
 						targetNodes.parentNode.entries[parentIndex + 1] = overFlowKeys[2];
 						targetNodes.parentNode.indexPointer[parentIndex + 1] = rightLeafNodes;
 						targetNodes.parentNode.entries[0].key++;
+					} else {
+						PushUp(targetNodes, overFlowKeys[2].key, key, rid);
 					}
 				}
 			} else {
@@ -205,6 +291,8 @@ public class BTree {
 					targetNodes.parentNode.entries[parentIndex + 1] = overFlowKeys[2];
 					targetNodes.parentNode.indexPointer[parentIndex + 1] = rightLeafNodes;
 					targetNodes.parentNode.entries[0].key++;
+				} else {
+
 				}
 			}
 		}
@@ -238,7 +326,6 @@ public class BTree {
 			currentNodes = currentNodes.leafSidling;
 		}
 		System.out.println("");
-		System.out.println("End");
 	}
 
 	public void PrintRootNode() {
@@ -246,7 +333,50 @@ public class BTree {
 			System.out.print(root.entries[i].key + " ,");
 		}
 		System.out.println("");
-		System.out.println("End");
+	}
+
+	public void PrintIndexNode(int height){
+		Nodes currentNodes = root.indexPointer[0];
+		int currentPointer =0;
+		while (currentNodes != null) {
+			for (int i = 1; i <= 4; i++) {
+				if (currentNodes.entries[i] != null) {
+					System.out.print(currentNodes.entries[i].key);
+				} else {
+					System.out.print("none");
+				}
+				System.out.print(", ");
+			}
+			System.out.print("  ||  ");
+			if(currentPointer==4){
+				break;
+			}
+			currentPointer +=1;
+			currentNodes = root.indexPointer[currentPointer];
+		}
+	}
+
+	public void PrintTree(){
+		System.out.println("----------Print Tree----------");
+		System.out.println("----------   Root   ----------");
+		PrintRootNode();
+		for(int i=0; i<GetHeight()-1;i++){
+			System.out.println("----------   Height "+(i+1)+"  ----------");
+			PrintIndexNode(i+1);
+			System.out.println("");
+		}
+		System.out.println("----------Leaf Node----------");
+		PrintAllLeafNode();
+		System.out.println("----------End print ----------");
+	}
+	public int GetHeight(){
+		Nodes currentNodes = root;
+		int height =0;
+		while(currentNodes.isLeafNode==false){
+			height ++;
+			currentNodes = currentNodes.indexPointer[0];
+		}
+		return height;
 	}
 
 	public static void main(String[] args) {
@@ -268,8 +398,10 @@ public class BTree {
 		bTree.Insert(11, 0);
 		bTree.Insert(10, 0);
 		bTree.Insert(25, 0);
-		bTree.PrintAllLeafNode();
-		bTree.PrintRootNode();
+		bTree.Insert(0, 0);
+		bTree.Insert(-1, 0);
+		bTree.Insert(-2, 0);
+		bTree.PrintTree();
 	}
 
 }
