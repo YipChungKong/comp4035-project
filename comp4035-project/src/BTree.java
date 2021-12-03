@@ -134,34 +134,89 @@ public class BTree {
 				if (targetNodes.leafSidling.entries[0].key < 4) {
 					// sidling not full, we using re-distribution first
 					// Assign the first 4 sorted overFlowkey to targetNodes
-					for(int i = 1; i<=4; i++){
-						targetNodes.entries[i] = overFlowKeys[i-1];
+					for (int i = 1; i <= 4; i++) {
+						targetNodes.entries[i] = overFlowKeys[i - 1];
 					}
-					// Rearrange sidling node, all the node forward 1 index, and input the largest one overflow key to the first one
-					for(int i = 4; i>1; i--){
-						targetNodes.leafSidling.entries[i] = targetNodes.leafSidling.entries[i-1];
+					// Rearrange sidling node, all the node forward 1 index, and input the largest
+					// one overflow key to the first one
+					for (int i = 4; i > 1; i--) {
+						targetNodes.leafSidling.entries[i] = targetNodes.leafSidling.entries[i - 1];
 					}
 					targetNodes.leafSidling.entries[1] = overFlowKeys[4];
+					targetNodes.leafSidling.entries[0].key++;
 					// The parent Index should change to overFlowKey
-					targetNodes.parentNode.entries[FindParentIndex(targetNodes.parentNode,targetNodes.leafSidling.entries[targetNodes.leafSidling.entries[0].key].key)] = overFlowKeys[4];
+					targetNodes.parentNode.entries[FindParentIndex(targetNodes.parentNode,
+							targetNodes.leafSidling.entries[targetNodes.leafSidling.entries[0].key].key)] = overFlowKeys[4];
+				} else {
+					// No sidling or sidling is full, we use copy up, check parent full or not
+					if (targetNodes.parentNode.entries[0].key < 4) {
+						// Open new nodes
+						Nodes rightLeafNodes = new Nodes();
+						rightLeafNodes.entries[0].key = 3;
+						rightLeafNodes.entries[1] = overFlowKeys[2];
+						rightLeafNodes.entries[2] = overFlowKeys[3];
+						rightLeafNodes.entries[3] = overFlowKeys[4];
+						rightLeafNodes.leafSidling = targetNodes.leafSidling;
+						rightLeafNodes.parentNode = targetNodes.parentNode;
+						targetNodes.leafSidling = rightLeafNodes;
+						targetNodes.entries[0].key = 2;
+						targetNodes.entries[1] = overFlowKeys[0];
+						targetNodes.entries[2] = overFlowKeys[1];
+						targetNodes.entries[3] = null;
+						targetNodes.entries[4] = null;
+						int parentIndex = FindParentIndex(targetNodes.parentNode, overFlowKeys[4].key);
+						for (int i = 4; i > parentIndex + 1; i--) { // do 4-parentIndex-1 time, because, if the
+																	// parentNode not full, we need to move key3 to 4...
+																	// 2 to 3 ... until i+1 can be replace
+							targetNodes.parentNode.entries[i] = targetNodes.parentNode.entries[i - 1];
+							targetNodes.parentNode.indexPointer[i] = targetNodes.parentNode.indexPointer[i - 1];
+						}
+						// After rearrange, we assign pointer to new node, and the key to parent index
+						targetNodes.parentNode.entries[parentIndex + 1] = overFlowKeys[2];
+						targetNodes.parentNode.indexPointer[parentIndex + 1] = rightLeafNodes;
+						targetNodes.parentNode.entries[0].key++;
+					}
 				}
-			}
-			if(targetNodes.leafSidling==null || targetNodes.leafSidling.entries[0].key==4){
+			} else {
 				// No sidling or sidling is full, we use copy up, check parent full or not
-				if(targetNodes.parentNode.entries[0].key<4){
-					
+				if (targetNodes.parentNode.entries[0].key < 4) {
+					// Open new nodes
+					Nodes rightLeafNodes = new Nodes();
+					rightLeafNodes.entries[0].key = 3;
+					rightLeafNodes.entries[1] = overFlowKeys[2];
+					rightLeafNodes.entries[2] = overFlowKeys[3];
+					rightLeafNodes.entries[3] = overFlowKeys[4];
+					rightLeafNodes.leafSidling = targetNodes.leafSidling;
+					rightLeafNodes.parentNode = targetNodes.parentNode;
+					targetNodes.leafSidling = rightLeafNodes;
+					targetNodes.entries[0].key = 2;
+					targetNodes.entries[1] = overFlowKeys[0];
+					targetNodes.entries[2] = overFlowKeys[1];
+					targetNodes.entries[3] = null;
+					targetNodes.entries[4] = null;
+					int parentIndex = FindParentIndex(targetNodes.parentNode, overFlowKeys[4].key);
+					for (int i = 4; i > parentIndex + 1; i--) { // do 4-parentIndex-1 time, because, if the parentNode
+																// not full, we need to move key3 to 4... 2 to 3 ...
+																// until i+1 can be replace
+						targetNodes.parentNode.entries[i] = targetNodes.parentNode.entries[i - 1];
+						targetNodes.parentNode.indexPointer[i] = targetNodes.parentNode.indexPointer[i - 1];
+					}
+					// After rearrange, we assign pointer to new node, and the key to parent index
+					targetNodes.parentNode.entries[parentIndex + 1] = overFlowKeys[2];
+					targetNodes.parentNode.indexPointer[parentIndex + 1] = rightLeafNodes;
+					targetNodes.parentNode.entries[0].key++;
 				}
 			}
 		}
 	};
 
-	public int FindParentIndex(Nodes parent, int largestKey){
-		for(int i=1; i<=4;i++){
-			if(parent.entries[i]==null){
-				return i-1;
-			}else{
-				if(parent.entries[i].key>largestKey){
-					return i-1;
+	public int FindParentIndex(Nodes parent, int largestKey) {
+		for (int i = 1; i <= 4; i++) {
+			if (parent.entries[i] == null) {
+				return i - 1;
+			} else {
+				if (parent.entries[i].key > largestKey) {
+					return i - 1;
 				}
 			}
 		}
@@ -179,7 +234,16 @@ public class BTree {
 				}
 				System.out.print(", ");
 			}
+			System.out.print("  ||  ");
 			currentNodes = currentNodes.leafSidling;
+		}
+		System.out.println("");
+		System.out.println("End");
+	}
+
+	public void PrintRootNode() {
+		for (int i = 1; i <= root.entries[0].key; i++) {
+			System.out.print(root.entries[i].key + " ,");
 		}
 		System.out.println("");
 		System.out.println("End");
@@ -196,8 +260,10 @@ public class BTree {
 		bTree.Insert(5, 0);
 		bTree.Insert(3, 0);
 		bTree.Insert(4, 0);
-
+		System.out.println("--------------------------------");
+		bTree.Insert(12, 0);
 		bTree.PrintAllLeafNode();
+		bTree.PrintRootNode();
 	}
 
 }
