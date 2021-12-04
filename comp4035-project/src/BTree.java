@@ -1,4 +1,6 @@
 import java.lang.annotation.Target;
+import java.io.*;
+import java.util.Scanner;
 
 public class BTree {
 	int order = 2; // max number of node is order*2
@@ -647,31 +649,24 @@ public class BTree {
 		}
 	}
 
-	public static void main(String[] args) {
+	public void BTree(String name) throws Exception {
+		File file = new File(name);
+		if (!file.exists()) {
+			System.out.println("File not exisit");
+		} else {
+			Scanner scr = new Scanner(file);
+			while (scr.hasNext()) {
+				Insert(scr.nextInt(), 0);
+			}
+			scr.close();
+			System.out.println("Data import finished");
+		}
+	}
+
+	public static void main(String[] args) throws Exception {
 		// TODO Auto-generated method stub
 		BTree bTree = new BTree();
-		bTree.Insert(50, 0);
-		bTree.Insert(20, 0);
-		bTree.Insert(30, 0);
-		bTree.Insert(8, 0);
-		bTree.Insert(1, 0);
-		bTree.Insert(22, 0);
-		bTree.Insert(46, 0);
-		bTree.Insert(23, 0);
-		bTree.Insert(28, 0);
-		bTree.Insert(21, 0);
-		bTree.Insert(27, 0);
-		bTree.Insert(15, 0);
-		bTree.Insert(10, 0);
-		bTree.Insert(13, 0);
-		bTree.Insert(3, 0);
-		bTree.Insert(7, 0);
-		bTree.Insert(-80, 0);
-		bTree.Insert(-20, 0);
-		bTree.Insert(-10, 0);
-		bTree.Insert(2, 0);
-		bTree.Insert(25, 0);
-		bTree.Insert(26, 0);
+		bTree.BTree("test.txt");
 		bTree.DeleteKey(-20, 0);
 		bTree.DeleteKey(1, 0);
 		bTree.DeleteKey(-10, 0);
