@@ -608,13 +608,13 @@ public class BTree {
 				}
 			} else {
 				// Put rightIndexNode last index be the parent,
-				Nodes rightIndexNode = targetNodes.parentNode.indexPointer[parentIndex - 1];
+				Nodes rightIndexNode = targetNodes.parentNode.indexPointer[parentIndex + 1];
 				targetNodes.entries[0].key++;
 				targetNodes.entries[2] = targetNodes.parentNode.entries[parentIndex + 1];
 				targetNodes.indexPointer[2] = rightIndexNode.indexPointer[0];
 				targetNodes.indexPointer[2].parentNode = targetNodes;
 				targetNodes.parentNode.entries[parentIndex + 1] = rightIndexNode.entries[1];
-				for (int i = 0; i < 4; i++) {
+				for (int i = 1; i < 4; i++) {
 					rightIndexNode.entries[i] = rightIndexNode.entries[i + 1];
 					rightIndexNode.indexPointer[i] = rightIndexNode.indexPointer[i
 							+ 1];
@@ -649,9 +649,11 @@ public class BTree {
 		bTree.Insert(-20, 0);
 		bTree.Insert(-10, 0);
 		bTree.Insert(2, 0);
-		bTree.DeleteKey(22, 0);
-		bTree.DeleteKey(13, 0);
-		bTree.DeleteKey(20, 0);
+		bTree.Insert(25, 0);
+		bTree.Insert(26, 0);
+		bTree.DeleteKey(-20, 0);
+		bTree.DeleteKey(1, 0);
+		bTree.DeleteKey(-10, 0);
 		bTree.PrintTree();
 	}
 
