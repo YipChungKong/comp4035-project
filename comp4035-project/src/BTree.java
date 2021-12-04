@@ -1,3 +1,4 @@
+import java.lang.annotation.Target;
 
 public class BTree {
 	int order = 2; // max number of node is order*2
@@ -439,49 +440,70 @@ public class BTree {
 		return height;
 	}
 
+	public void DeleteKey(int key,int rid){
+			Nodes currentNodes = start;
+			while(currentNodes!=null){
+				for (int i = 1; i <= 4; i++) {
+					if (currentNodes.entries[i] != null) {
+						if(currentNodes.entries[i].key==key){
+							// Have key, delete it
+							currentNodes.entries[i] =null;
+							// Rearrange the Nodes
+							for(int j=i; j<4;j++){
+							currentNodes.entries[j] = currentNodes.entries[j+1];
+							}
+							// After rearrange, the last node before delete should delete(As it rearrange to previous one)
+							currentNodes.entries[currentNodes.entries[0].key] =null;
+							currentNodes.entries[0].key --;
+							System.out.println("Have key");
+							return;
+						}else if(currentNodes.entries[i].key >key){
+							System.out.println("Not have key");
+							return;
+						}
+					} 
+				}
+				currentNodes = currentNodes.leafSidling;
+			}
+			System.out.println("Not have key");
+			return;
+	}
+
+	public void HandleUnderFlow(Nodes targetNode){
+
+	}
+
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 		BTree bTree = new BTree();
-		bTree.Insert(8, 0);
-		bTree.Insert(6, 0);
-		bTree.Insert(7, 0);
-		bTree.Insert(1, 0);
-		bTree.Insert(2, 0);
-		bTree.Insert(5, 0);
-		bTree.Insert(3, 0);
-		bTree.Insert(4, 0);
-		System.out.println("--------------------------------");
-		bTree.Insert(12, 0);
-		bTree.Insert(15, 0);
-		bTree.Insert(20, 0);
-		bTree.Insert(9, 0);
-		bTree.Insert(11, 0);
-		bTree.Insert(10, 0);
-		bTree.Insert(25, 0);
-		bTree.Insert(0, 0);
-		bTree.Insert(-1, 0);
-		bTree.Insert(-2, 0);
-		bTree.Insert(30, 0);
-		bTree.Insert(32, 0);
-		bTree.Insert(23, 0);
-		bTree.Insert(21, 0);
-		bTree.Insert(24, 0);
-		bTree.Insert(33, 0);
-		bTree.Insert(26, 0);
-		bTree.Insert(27, 0);
-		bTree.Insert(35, 0);
-		bTree.Insert(28, 0);
-		bTree.Insert(29, 0);
-		bTree.Insert(29, 0);
-		bTree.Insert(40, 0);
-		bTree.Insert(27, 0);
-		bTree.Insert(27, 0);
-		bTree.Insert(27, 0);
 		bTree.Insert(50, 0);
+		bTree.Insert(20, 0);
+		bTree.Insert(30, 0);
+		bTree.Insert(8, 0);
+		bTree.Insert(1, 0);
+		bTree.Insert(22, 0);
+		bTree.Insert(46, 0);
+		bTree.Insert(23, 0);
+		bTree.Insert(28, 0);
+		System.out.println("--------------------------------");
 		System.out.println("");
 		System.out.println("-------------------28---------------------");
-	 bTree.Insert(42, 0);
-
+	    bTree.Insert(21, 0);
+		bTree.Insert(27, 0);
+		bTree.Insert(15, 0);
+		bTree.Insert(10, 0);
+		bTree.Insert(13, 0);
+		bTree.Insert(3, 0);
+		bTree.Insert(7, 0);
+		bTree.Insert(-80, 0);
+		bTree.Insert(-20, 0);
+		bTree.Insert(-10, 0);
+		bTree.Insert(2, 0);
+		bTree.PrintTree();
+		bTree.DeleteKey(22, 0);
+		bTree.DeleteKey(13, 0);
+		bTree.DeleteKey(20, 0);
+		bTree.DeleteKey(20, 0);
 		bTree.PrintTree();
 	}
 
