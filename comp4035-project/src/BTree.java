@@ -43,13 +43,11 @@ public class BTree {
 		while (currentNode.isLeafNode == false) { // Find the nodes should store the key first, scan from root until the
 													// Nodes.isLeafNode = true
 			for (int i = 1; i <= 5; i++) {
-				System.out.println(i);
 				if(i>4){
 					currentNode = currentNode.indexPointer[4];
 					break;
 				}
 				if (currentNode.entries[i] == null) {
-					System.out.println(i);
 					currentNode = currentNode.indexPointer[i - 1];
 					break;
 				} else {
@@ -172,6 +170,7 @@ public class BTree {
 			// Splite Node, add one empty node first
 			Nodes rightIndexNode = new Nodes();
 			rightIndexNode.isLeafNode = false;
+			rightIndexNode.parentNode = targetNodes.parentNode.parentNode;
 			if (sortedOverFlowKeyPosition <= 2) {
 				// Put parent[2] to be new parent
 				rightIndexNode.entries[0].key = 2;
@@ -470,10 +469,19 @@ public class BTree {
 		bTree.Insert(33, 0);
 		bTree.Insert(26, 0);
 		bTree.Insert(27, 0);
-		System.out.println("");
-		System.out.println("-------------------28---------------------");
 		bTree.Insert(35, 0);
 		bTree.Insert(28, 0);
+		bTree.Insert(29, 0);
+		bTree.Insert(29, 0);
+		bTree.Insert(40, 0);
+		bTree.Insert(27, 0);
+		bTree.Insert(27, 0);
+		bTree.Insert(27, 0);
+		bTree.Insert(50, 0);
+		System.out.println("");
+		System.out.println("-------------------28---------------------");
+	 bTree.Insert(42, 0);
+
 		bTree.PrintTree();
 	}
 
