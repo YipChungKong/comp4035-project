@@ -430,6 +430,27 @@ public class BTree {
 		System.out.println("----------End print ----------");
 	}
 
+	public void SearchTree(int low, int high){
+		Nodes currentNodes = start;
+		int count =0;
+		System.out.println("-----------Search Start---------");
+		while (currentNodes != null) {
+			for (int i = 1; i <= 4; i++) {
+				if (currentNodes.entries[i] != null) {
+					if (currentNodes.entries[i].key >=low && currentNodes.entries[i].key <=high) {
+						System.out.println(currentNodes.entries[i].key);	
+						count++;		
+					}
+				}
+			}
+			currentNodes = currentNodes.leafSidling;
+		}
+		if(count==0){
+			System.out.println("No data found");
+		}
+		System.out.println("-------End Search--------");
+	}
+
 	public int GetHeight() {
 		Nodes currentNodes = root;
 		int height = 0;
@@ -655,6 +676,7 @@ public class BTree {
 		bTree.DeleteKey(1, 0);
 		bTree.DeleteKey(-10, 0);
 		bTree.PrintTree();
+		bTree.SearchTree(10, 27);
 	}
 
 }
