@@ -44,7 +44,7 @@ public class BTree {
 		while (currentNode.isLeafNode == false) { // Find the nodes should store the key first, scan from root until the
 													// Nodes.isLeafNode = true
 			for (int i = 1; i <= 5; i++) {
-				if(i>4){
+				if (i > 4) {
 					currentNode = currentNode.indexPointer[4];
 					break;
 				}
@@ -364,7 +364,7 @@ public class BTree {
 					return i - 1;
 				}
 			}
-			if(i==4){
+			if (i == 4) {
 				return 4;
 			}
 		}
@@ -440,37 +440,190 @@ public class BTree {
 		return height;
 	}
 
-	public void DeleteKey(int key,int rid){
-			Nodes currentNodes = start;
-			while(currentNodes!=null){
-				for (int i = 1; i <= 4; i++) {
-					if (currentNodes.entries[i] != null) {
-						if(currentNodes.entries[i].key==key){
-							// Have key, delete it
-							currentNodes.entries[i] =null;
-							// Rearrange the Nodes
-							for(int j=i; j<4;j++){
-							currentNodes.entries[j] = currentNodes.entries[j+1];
-							}
-							// After rearrange, the last node before delete should delete(As it rearrange to previous one)
-							currentNodes.entries[currentNodes.entries[0].key] =null;
-							currentNodes.entries[0].key --;
-							System.out.println("Have key");
-							return;
-						}else if(currentNodes.entries[i].key >key){
-							System.out.println("Not have key");
-							return;
+	public void DeleteKey(int key, int rid) {
+		Nodes currentNodes = start;
+		while (currentNodes != null) {
+			for (int i = 1; i <= 4; i++) {
+				if (currentNodes.entries[i] != null) {
+					if (currentNodes.entries[i].key == key) {
+						// Have key, delete it
+						currentNodes.entries[i] = null;
+						// Rearrange the Nodes
+						for (int j = i; j < 4; j++) {
+							currentNodes.entries[j] = currentNodes.entries[j + 1];
 						}
-					} 
+						// After rearrange, the last node before delete should delete(As it rearrange to
+						// previous one)
+						currentNodes.entries[currentNodes.entries[0].key] = null;
+						currentNodes.entries[0].key--;
+						if (currentNodes.entries[0].key == 1) {
+							HandleUnderFlow(currentNodes);
+						}
+						System.out.println("Have key");
+						return;
+					} else if (currentNodes.entries[i].key > key) {
+						System.out.println("Not have key");
+						return;
+					}
 				}
-				currentNodes = currentNodes.leafSidling;
 			}
-			System.out.println("Not have key");
-			return;
+			currentNodes = currentNodes.leafSidling;
+		}
+		System.out.println("Not have key");
+		return;
 	}
 
-	public void HandleUnderFlow(Nodes targetNode){
+	public void HandleUnderFlow(Nodes targetNodes) {
+		if (targetNodes.isLeafNode == true) {
+			if (targetNodes.leafSidling.entries[0].key > 2) {
+				// Sibling can share key, re-distribution
+				targetNodes.entries[2] = targetNodes.leafSidling.entries[1];
+				targetNodes.entries[0].key++;
+				// ReArrange sibling
+				for (int i = 1; i < 4; i++) {
+					targetNodes.leafSidling.entries[i] = targetNodes.leafSidling.entries[i + 1];
+				}
+				// After rearrange, the last node before delete should delete(As it rearrange to
+				// previous one)
+				targetNodes.leafSidling.entries[targetNodes.leafSidling.entries[0].key] = null;
+				targetNodes.leafSidling.entries[0].key--;
+				targetNodes.leafSidling.parentNode.entries[FindParentIndex(targetNodes.leafSidling.parentNode,
+						targetNodes.leafSidling.entries[targetNodes.leafSidling.entries[0].key].key)] = targetNodes.leafSidling.entries[1];
+			} else {
+				MergeNodes(targetNodes);
+			}
+		} else {
 
+		}
+	}
+
+	public void MergeNodes(Nodes targetNodes) {
+		// TargetNodes store remaining 2 key from sibling, and rearrange the parent
+		// Sibling must only if 2 key as, if 1 keys, it underFlow, we will solve it
+		// before, and if it more than 3 key, we can use re-distribution
+		targetNodes.entries[0].key += 2;
+		targetNodes.entries[2] = targetNodes.leafSidling.entries[1];
+		targetNodes.entries[3] = targetNodes.leafSidling.entries[2];
+		int parentIndex = FindParentIndex(targetNodes.leafSidling.parentNode, targetNodes.leafSidling.entries[2].key);
+		for (int i = parentIndex; i < 4; i++) {
+			targetNodes.leafSidling.parentNode.entries[i] = targetNodes.leafSidling.parentNode.entries[i + 1];
+			targetNodes.leafSidling.parentNode.indexPointer[i] = targetNodes.leafSidling.parentNode.indexPointer[i + 1];
+		}
+		targetNodes.leafSidling.parentNode.entries[targetNodes.leafSidling.parentNode.entries[0].key] = null;
+		targetNodes.leafSidling.parentNode.indexPointer[targetNodes.leafSidling.parentNode.entries[0].key] = null;
+		targetNodes.leafSidling.parentNode.entries[0].key--;
+		if (targetNodes.leafSidling.parentNode.entries[0].key < 2) {
+			PullDown(targetNodes.parentNode);
+		}
+		targetNodes.leafSidling = targetNodes.leafSidling.leafSidling;
+	}
+
+	public void PullDown(Nodes targetNodes) {
+		int parentIndex = FindParentIndex(targetNodes.parentNode, targetNodes.entries[1].key);
+		if (parentIndex != 0) { // !=0 means that it is not the first child node
+			if (targetNodes.parentNode.indexPointer[parentIndex - 1].entries[0].key == 2) {// If the left index nodes,
+																							// only have 2 key, we merge
+																							// two index nodes, else we
+																							// re-disturibtion
+				Nodes leftIndexNode = targetNodes.parentNode.indexPointer[parentIndex - 1];
+				leftIndexNode.entries[0].key += 2;
+				leftIndexNode.entries[3] = targetNodes.parentNode.entries[parentIndex];
+				leftIndexNode.entries[4] = targetNodes.entries[1];
+				leftIndexNode.indexPointer[3] = targetNodes.indexPointer[0];
+				leftIndexNode.indexPointer[4] = targetNodes.indexPointer[1];
+				leftIndexNode.indexPointer[3].parentNode = leftIndexNode;
+				leftIndexNode.indexPointer[4].parentNode = leftIndexNode;
+				// Re arrange parent
+				for (int i = parentIndex; i < 4; i++) {
+					targetNodes.parentNode.entries[i] = targetNodes.parentNode.entries[i + 1];
+					targetNodes.parentNode.indexPointer[i] = targetNodes.parentNode.indexPointer[i
+							+ 1];
+				}
+				targetNodes.parentNode.entries[targetNodes.parentNode.entries[0].key] = null;
+				targetNodes.parentNode.indexPointer[targetNodes.parentNode.entries[0].key] = null;
+				targetNodes.parentNode.entries[0].key--;
+				if(targetNodes.parentNode==root){
+					if(root.entries[0].key==0){
+						root = leftIndexNode;
+						height--;
+						return;
+					}else{
+						return;
+					}
+				}
+				if (targetNodes.parentNode.entries[0].key < 2) {
+					PullDown(targetNodes.parentNode);
+				}
+			} else {
+				// Put leftIndexNode last index be the parent,
+				Nodes leftIndexNode = targetNodes.parentNode.indexPointer[parentIndex - 1];
+				targetNodes.entries[2] = targetNodes.entries[1];
+				targetNodes.indexPointer[2] = targetNodes.indexPointer[1];
+				targetNodes.indexPointer[1] = targetNodes.indexPointer[0];
+				targetNodes.indexPointer[0] = leftIndexNode.indexPointer[leftIndexNode.entries[0].key];
+				targetNodes.indexPointer[0].parentNode = targetNodes;
+				targetNodes.entries[1] = targetNodes.parentNode.entries[parentIndex];
+				targetNodes.parentNode.entries[parentIndex] = leftIndexNode.entries[leftIndexNode.entries[0].key];
+				leftIndexNode.entries[leftIndexNode.entries[0].key] = null;
+				leftIndexNode.indexPointer[leftIndexNode.entries[0].key] = null;
+				leftIndexNode.entries[0].key--;
+				targetNodes.entries[0].key++;
+			}
+		} else {
+			if (targetNodes.parentNode.indexPointer[parentIndex + 1].entries[0].key == 2) {// If the left index nodes,
+																							// only have 2 key, we merge
+																							// two index nodes, else we
+																							// re-disturibtion
+				Nodes rightIndexNode = targetNodes.parentNode.indexPointer[parentIndex + 1];
+				targetNodes.entries[2] = targetNodes.parentNode.entries[parentIndex + 1];
+				targetNodes.entries[3] = rightIndexNode.entries[1];
+				targetNodes.entries[4] = rightIndexNode.entries[2];
+				targetNodes.indexPointer[2] = rightIndexNode.indexPointer[0];
+				targetNodes.indexPointer[3] = rightIndexNode.indexPointer[1];
+				targetNodes.indexPointer[4] = rightIndexNode.indexPointer[2];
+				targetNodes.indexPointer[2].parentNode = targetNodes;
+				targetNodes.indexPointer[3].parentNode = targetNodes;
+				targetNodes.indexPointer[4].parentNode = targetNodes;
+				targetNodes.entries[0].key += 3;
+				// Re arrange parent
+				for (int i = parentIndex + 1; i < 4; i++) {
+					targetNodes.parentNode.entries[i] = targetNodes.parentNode.entries[i + 1];
+					targetNodes.parentNode.indexPointer[i] = targetNodes.parentNode.indexPointer[i
+							+ 1];
+				}
+				targetNodes.parentNode.entries[targetNodes.parentNode.entries[0].key] = null;
+				targetNodes.parentNode.indexPointer[targetNodes.parentNode.entries[0].key] = null;
+				targetNodes.parentNode.entries[0].key--;
+				if(targetNodes.parentNode==root){
+					if(root.entries[0].key==0){
+						root =targetNodes;
+						height--;
+						return;
+					}else{
+						return;
+					}
+				}
+				if (targetNodes.parentNode.entries[0].key < 2) {
+					PullDown(targetNodes.parentNode);
+				}
+			} else {
+				// Put rightIndexNode last index be the parent,
+				Nodes rightIndexNode = targetNodes.parentNode.indexPointer[parentIndex - 1];
+				targetNodes.entries[0].key++;
+				targetNodes.entries[2] = targetNodes.parentNode.entries[parentIndex + 1];
+				targetNodes.indexPointer[2] = rightIndexNode.indexPointer[0];
+				targetNodes.indexPointer[2].parentNode = targetNodes;
+				targetNodes.parentNode.entries[parentIndex + 1] = rightIndexNode.entries[1];
+				for (int i = 0; i < 4; i++) {
+					rightIndexNode.entries[i] = rightIndexNode.entries[i + 1];
+					rightIndexNode.indexPointer[i] = rightIndexNode.indexPointer[i
+							+ 1];
+				}
+				rightIndexNode.entries[rightIndexNode.entries[0].key] = null;
+				rightIndexNode.indexPointer[rightIndexNode.entries[0].key] = null;
+				rightIndexNode.entries[0].key--;
+			}
+		}
 	}
 
 	public static void main(String[] args) {
@@ -485,10 +638,7 @@ public class BTree {
 		bTree.Insert(46, 0);
 		bTree.Insert(23, 0);
 		bTree.Insert(28, 0);
-		System.out.println("--------------------------------");
-		System.out.println("");
-		System.out.println("-------------------28---------------------");
-	    bTree.Insert(21, 0);
+		bTree.Insert(21, 0);
 		bTree.Insert(27, 0);
 		bTree.Insert(15, 0);
 		bTree.Insert(10, 0);
@@ -499,10 +649,8 @@ public class BTree {
 		bTree.Insert(-20, 0);
 		bTree.Insert(-10, 0);
 		bTree.Insert(2, 0);
-		bTree.PrintTree();
 		bTree.DeleteKey(22, 0);
 		bTree.DeleteKey(13, 0);
-		bTree.DeleteKey(20, 0);
 		bTree.DeleteKey(20, 0);
 		bTree.PrintTree();
 	}
