@@ -4,6 +4,10 @@ import java.util.Queue;
 import java.util.Scanner;
 
 public class BTree {
+	// COMP 4035 Project Group 1
+	// Group Member: YIP Chung Kong 20220480
+	//  			 YIP Cham Sum 20234198
+	//			     TSANG Tsun Sing 20236441	
 	int order = 2; // max number of node is order*2
 	Nodes root = new Nodes(); // It should be LeafNode as root is the leaf at the first 5 keys
 	Nodes start = root; // first leaf node array
@@ -874,6 +878,12 @@ public class BTree {
 
 	public static void main(String[] args) throws Exception {
 		// TODO Auto-generated method stub
+		System.out.println("COMP 4035 Group Project");
+		System.out.println("Group 1");
+		System.out.println("Group Member:");
+		System.out.println("YIP Chung Kong 20220480");
+		System.out.println("YIP Cham Sum 20234198");
+		System.out.println("TSANG Tsun Sing 20236441");
 		System.out.println("Please enter the file(the data file storing the search key values) name:");
 		//System.out.println("");
 		Scanner in = null;
