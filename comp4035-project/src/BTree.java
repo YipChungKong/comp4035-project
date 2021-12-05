@@ -1,5 +1,6 @@
-import java.lang.annotation.Target;
-import java.io.*;
+import java.io.File;
+import java.util.LinkedList;
+import java.util.Queue;
 import java.util.Scanner;
 
 public class BTree {
@@ -9,13 +10,9 @@ public class BTree {
 	int height = 0; // height start from 0
 
 	class Nodes {
-		Node[] entries = new Node[order * 2 + 1]; // store searching key, first entry uses to store number of key
-													// in the
-		// array
-		Nodes[] indexPointer = new Nodes[entries.length]; // pointer for next level index, only use when it's
-															// not leaf node
-		Nodes leafSidling; // pointer for locating leaf node, only use when it's
-							// leaf node , It's only point to next leaf node
+		Node[] entries = new Node[order * 2 + 1]; // store searching key, first entry uses to store number of key in the array
+		Nodes[] indexPointer = new Nodes[entries.length]; // pointer for next level index, only use when it's not leaf node
+		Nodes leafSidling; // pointer for locating leaf node, only use when it's leaf node , It's only point to next leaf node
 
 		Nodes parentNode;
 		boolean isLeafNode = true;
@@ -43,9 +40,8 @@ public class BTree {
 
 	public void Insert(int key, int rid) {
 		Nodes currentNode = root;
-		while (currentNode.isLeafNode == false) { // Find the nodes should store the key first, scan from root until the
-													// Nodes.isLeafNode = true
-			for (int i = 1; i <= 5; i++) {
+		while (currentNode.isLeafNode == false) { // Find the nodes should store the key first, scan from root until the Nodes.isLeafNode = true
+			for (int i = 1; i <= currentNode.entries.length; i++) {
 				if (i > 4) {
 					currentNode = currentNode.indexPointer[4];
 					break;
@@ -61,11 +57,11 @@ public class BTree {
 				}
 			}
 		}
-		if (currentNode.entries[0].key == 4) {
+		if (currentNode.entries[0].key == currentNode.entries.length-1) {
 			// full
 			CopyUp(currentNode, key, rid);
 		} else {
-			for (int i = 1; i <= 4; i++) {
+			for (int i = 1; i < currentNode.entries.length; i++) {
 				if (currentNode.entries[i] == null) {
 					currentNode.entries[i] = new Node(key, rid); // Insert complete add entries[0] count
 					currentNode.entries[0].key++;
@@ -227,22 +223,22 @@ public class BTree {
 
 	public void CopyUp(Nodes targetNodes, int key, int rid) {
 		// find the copy up key first, we new a int array to store 5 key and sort it
-		Node[] overFlowKeys = new Node[5];
-		for (int i = 0; i < 4; i++) {
+		Node[] overFlowKeys = new Node[targetNodes.entries.length];
+		for (int i = 0; i < targetNodes.entries.length-1; i++) {
 			// Put all the key of targetNodes to the overFlow one first
 			overFlowKeys[i] = targetNodes.entries[i + 1];
 		}
 		// compare Key and overFlow one by one
-		if (overFlowKeys[3].key < key) {
-			overFlowKeys[4] = new Node(key, rid);
+		if (overFlowKeys[targetNodes.entries.length-2].key < key) {
+			overFlowKeys[targetNodes.entries.length-1] = new Node(key, rid);
 		} else {
 			int sortPointer = 0;
 			while (overFlowKeys[sortPointer].key < key) {
 				sortPointer++;
 			}
-			int moveEntriesIndex = 3; // Move from last one
-			while (moveEntriesIndex >= sortPointer) {
-				overFlowKeys[moveEntriesIndex + 1] = overFlowKeys[moveEntriesIndex];
+			int moveEntriesIndex = targetNodes.entries.length-1; // Move from last one
+			while (moveEntriesIndex > sortPointer) {
+				overFlowKeys[moveEntriesIndex] = overFlowKeys[moveEntriesIndex-1];
 				moveEntriesIndex--;
 			}
 			overFlowKeys[sortPointer] = new Node(key, rid);
@@ -420,6 +416,7 @@ public class BTree {
 
 	public void PrintTree() {
 		System.out.println("----------Print Tree----------");
+		System.out.println();
 		System.out.println("----------   Root   ----------");
 		PrintRootNode();
 		for (int i = 0; i < GetHeight() - 1; i++) {
@@ -536,12 +533,15 @@ public class BTree {
 		targetNodes.leafSidling.parentNode.indexPointer[targetNodes.leafSidling.parentNode.entries[0].key] = null;
 		targetNodes.leafSidling.parentNode.entries[0].key--;
 		if (targetNodes.leafSidling.parentNode.entries[0].key < 2) {
+			System.out.println(targetNodes.parentNode.entries[0].key);
+			System.out.println(targetNodes.parentNode.entries[1].key);
 			PullDown(targetNodes.parentNode);
 		}
 		targetNodes.leafSidling = targetNodes.leafSidling.leafSidling;
 	}
 
 	public void PullDown(Nodes targetNodes) {
+		if(targetNodes.parentNode == null) return; //the root can have only one entry
 		int parentIndex = FindParentIndex(targetNodes.parentNode, targetNodes.entries[1].key);
 		if (parentIndex != 0) { // !=0 means that it is not the first child node
 			if (targetNodes.parentNode.indexPointer[parentIndex - 1].entries[0].key == 2) {// If the left index nodes,
@@ -648,30 +648,257 @@ public class BTree {
 			}
 		}
 	}
-
-	public void BTree(String name) throws Exception {
-		File file = new File(name);
-		if (!file.exists()) {
-			System.out.println("File not exisit");
-		} else {
-			Scanner scr = new Scanner(file);
-			while (scr.hasNext()) {
-				Insert(scr.nextInt(), 0);
+	
+	private void InsertRandomNumber(int low, int high, int num) {
+		// TODO Auto-generated method stub
+		for(int i = 0;i<num;i++) {
+			int no = (int)Math.floor(Math.random()*(high-low+1)+low);
+			Insert(no, 0);
+			System.out.println("key vlaue "+no+" is inserted");
+		}
+	}
+	
+	private void DeleteRange(int low, int high) {
+		// TODO Auto-generated method stub
+		Nodes currentNodes = start;
+		int location = 1;
+		boolean inRange = false;
+		while (currentNodes != null) {
+			if(!currentNodes.isLeafNode) {
+				if(location == 5) {
+					location = 1;
+					currentNodes = currentNodes.indexPointer[4];
+				}
+				else if(currentNodes.entries[location].key > low) {
+					currentNodes = currentNodes.indexPointer[location-1];
+					location = 1;
+				} 
+				location ++;
 			}
-			scr.close();
-			System.out.println("Data import finished");
+			else {
+				location = 1;
+				break;
+			}
+		}
+		while (currentNodes != null) {
+			if (currentNodes.entries[location] != null) {
+				if(currentNodes.entries[location].key < low) {
+					location ++;
+					if(location == 5) {
+						location =1;
+						currentNodes = currentNodes.leafSidling;
+					}
+					continue;
+				}
+				else {
+					inRange = true;
+					break;
+				}
+			}
+			else {
+				location =1;
+
+				currentNodes = currentNodes.leafSidling;
+			}
+		}
+        Queue<Integer> queue = new LinkedList<Integer>();
+		if(inRange) {
+			while(true) {
+				if(location==5 || currentNodes.entries[location] == null) {
+					if(currentNodes.leafSidling==null) {
+						break;
+					}
+					else{
+						currentNodes = currentNodes.leafSidling;
+						location = 1;
+						continue;
+					}
+				}
+				if(currentNodes.entries[location].key > high)
+					break;
+		        queue.offer(currentNodes.entries[location].key);
+				location ++;
+			}
+		}
+		for(Integer q : queue){
+			DeleteKey(q,0);
+        }
+	}
+	
+	private void DumpStatistics() {
+		// TODO Auto-generated method stub
+		int totalNode = GetNodeNumber();
+		int totalDataEntries = GetLeafNumber();
+		int totalIndexEntries = GetIndexNumber();
+		double averageFillFactor = 0;
+		int height = GetHeight();
+		
+		averageFillFactor = (totalDataEntries+totalIndexEntries)/(totalNode * 4.0) * 100;
+		System.out.println("Total number of nodes: "+totalNode);		
+		System.out.println("Total number of data entries: "+totalDataEntries);		
+		System.out.println("Total number of index entries: "+totalIndexEntries);		
+		System.out.println("Average fill factor: "+averageFillFactor);
+		System.out.println("Height of tree: "+height);
+		System.out.println();
+
+	}
+	
+	private int GetNodeNumber() {
+		// TODO Auto-generated method stub
+		return GetNodeNumber(root);
+	}
+
+	private int GetNodeNumber(Nodes currentNodes) {
+		// TODO Auto-generated method stub
+		int total = 1;
+		//if(currentNodes.isLeafNode) return 1;
+		if(currentNodes!=null) {
+			for(int i = 0; i<=4;i++) {
+				if(currentNodes.indexPointer[i]!=null) {
+					total += GetNodeNumber(currentNodes.indexPointer[i]);
+				}
+			}				
+		}
+		return total;
+	}
+
+	private int GetIndexNumber() {
+		// TODO Auto-generated method stub
+		return GetIndexNumber(root);
+	}
+	
+	private int GetIndexNumber(Nodes currentNodes) {
+		// TODO Auto-generated method stub
+		int total = 0;
+		if(currentNodes.isLeafNode) return 0;
+		if(currentNodes!=null) {
+			total = currentNodes.entries[0].key;
+			for(int i = 0; i<=4;i++) {
+				if(currentNodes.indexPointer[i]!=null) {
+					total += GetIndexNumber(currentNodes.indexPointer[i]);
+				}
+			}				
+		}
+		return total;
+	}
+
+	private int GetLeafNumber() {
+		// TODO Auto-generated method stub
+		Nodes currentNodes = start;
+		int total = 0;
+		while(currentNodes!=null) {
+			total += currentNodes.entries[0].key;
+			currentNodes = currentNodes.leafSidling;
+		}
+		return total;
+	}
+
+	public String ShowOptions() {
+		Scanner in = new Scanner(System.in);
+		String[] options = { "Insert", "Delete", "Search", "Print", "Stats", "Help", "Exit" };
+		System.out.println("Please choose following option:");		
+		System.out.println("(Enter the corresponding number)");
+		for (int i = 0; i < options.length; ++i) {
+			System.out.println("(" + (i + 1) + ") " + options[i]);
+		}
+		String line = in.nextLine();
+		return line;
+	}
+	
+	public void Run() {
+		Scanner in = new Scanner(System.in);
+		int low;
+		int high;
+		int num;
+		while (true) {
+			String line = ShowOptions();
+			int choice = -1;
+			try {
+				choice = Integer.parseInt(line);
+			} catch (Exception e) {
+				System.out.println("This option is not available");
+				continue;
+			}
+			if (!(choice >= 1 && choice <= 7)) {
+				System.out.println("This option is not available");
+				continue;
+			}
+			switch(choice) {
+				case 1:
+					System.out.println("Insert \"n\" records randomly chosen in the range [\"low\", \"high\"] ");
+					System.out.println("Please enter it follow this format :");
+					System.out.println("low high n(Separate them with spaces)");
+					low = in.nextInt();
+					high = in.nextInt();
+					num = in.nextInt();
+					System.out.println(num+" data entries with keys randomly chosen between [" +low+ "," +high+"] are inserted! ");
+					InsertRandomNumber(low,high,num);
+					
+					break;
+				case 2:
+					System.out.println("Delete records with key values in the range [\"low\", \"high\"] ");
+					System.out.println("Please enter it follow this format :");
+					System.out.println("low high (Separate them with spaces)");
+					low = in.nextInt();
+					high = in.nextInt();
+					System.out.println("data entries with keys between [" +low+ "," +high+"] are deleted! ");
+					DeleteRange(low,high);
+					break;
+				case 3:
+					System.out.println("Return the keys that fall in the range [\"low\", \"high\"] ");
+					System.out.println("Please enter it follow this format :");
+					System.out.println("low high (Separate them with spaces)");
+					low = in.nextInt();
+					high = in.nextInt();
+					SearchTree(low,high);
+					break;
+				case 4:
+					PrintTree();
+					break;
+				case 5:
+					DumpStatistics();
+					break;
+				case 6:
+					System.out.println("(1) Insert: Insert \"n\" records randomly chosen in the range [\"low\", \"high\"] ");
+					System.out.println("(2) Delete: Delete records with key values in the range [\"low\", \"high\"] ");
+					System.out.println("(3) Search: Search the keys that fall in the range [\"low\", \"high\"] ");
+					System.out.println("(4) Print : Print the whole B+ tree");
+					System.out.println("(5) Stats : Show the statistics of the B+ tree");
+					System.out.println();
+					break;
+				case 7:
+					return;
+			}
 		}
 	}
 
 	public static void main(String[] args) throws Exception {
 		// TODO Auto-generated method stub
+		System.out.println("Please enter the file(the data file storing the search key values) name:");
+		//System.out.println("");
+		Scanner in = null;
+		File file = null;
+		while(true) {
+			in = new Scanner(System.in);
+			String name = in.nextLine();
+			file = new File(name);
+			if (!file.exists()) {
+				System.out.println("File not exisit");
+				System.out.println("Please enter the correct file name");
+			} else {
+				System.out.println("Data import finished");
+				break;
+			}
+		}
+		Scanner scr = new Scanner(file);
 		BTree bTree = new BTree();
-		bTree.BTree("test.txt");
-		bTree.DeleteKey(-20, 0);
-		bTree.DeleteKey(1, 0);
-		bTree.DeleteKey(-10, 0);
-		bTree.PrintTree();
-		bTree.SearchTree(10, 27);
+		while (scr.hasNext()) {
+			bTree.Insert(scr.nextInt(), 0);
+		}
+		//bTree.DeleteKey(13, 0);
+
+		bTree.Run();
+		System.out.println("Thanks! Byebye ^.^");
 	}
 
 }
